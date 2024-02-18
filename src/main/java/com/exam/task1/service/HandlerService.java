@@ -9,12 +9,15 @@ import org.springframework.stereotype.Service;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
 public class HandlerService implements Handler {
 
+    private final Executor executor = Executors.newCachedThreadPool();
     private static final AtomicInteger retriesCount = new AtomicInteger(0);
 
     @Autowired
@@ -29,10 +32,10 @@ public class HandlerService implements Handler {
     public ApplicationStatusResponse performOperation(String id) {
 
         CompletableFuture<?> future1 = CompletableFuture
-                .supplyAsync(() -> client.getApplicationStatus1(id));
+                .supplyAsync(() -> client.getApplicationStatus1(id), executor);
 
         CompletableFuture<?> future2 = CompletableFuture
-                .supplyAsync(() -> client.getApplicationStatus2(id));
+                .supplyAsync(() -> client.getApplicationStatus2(id), executor);
 
         return CompletableFuture.anyOf(future1, future2)
                 .orTimeout(15, TimeUnit.SECONDS)
